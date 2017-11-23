@@ -101,23 +101,202 @@
 #### <a name='js-questions'>JS 相关问题：</a>
 
 * 请解释事件代理 (event delegation)。
+
+**Google**: 避免在特殊的结点触发事件，取而代之把事件处理添加到它的父节点上，在子节点的事件冒泡时会在父节点上触发。
+
+好处:
+
+1. 如果创建了一个新的结点，不需要重新绑定事件。可以动态的创建新的 DOM 结点。
+2. 使用了更少的事件绑定，节省内存，尤其是对于 webapp 来说很有用。
+
+
 * 请解释 JavaScript 中 `this` 是如何工作的。
+
+**Try**: 当前对象的引用。当在一个函数中使用时，它指向了触发这个函数的对象。
+
+**Google**: 计算当前执行上下文的 this 绑定的值。如果函数是以 `obj.func()` 这种方式执行，this 会指向 `obj`，如果是 `func.call(this)` (apply, bind) 这种方式，this 会指向 `obj`，其他情况, this 会指向 `window` (全局对象)。
+
+
 * 请解释原型继承 (prototypal inheritance) 的原理。
+
+**?Try**: 设置 objectA 对象的 prototype 为 objectB，这实现了一个继承。另一方面，如果某个属性在 objectA 上找不到的话，由于 JavaScript 的原型链机制，它会去 objectB 上找，如果在 objectB 上还是找不到，会继续在 objectB 的原型上找，直到 Object 的原型在结束。
+
+
+* 你怎样测试你的 JavaScript 代码？
+
+
 * 你怎么看 AMD vs. CommonJS？
+
+**Try**: 他们是不同的 module loader 标准。AMD 是异步引用，对于浏览器环境很适合，如 RequireJS。CommonJS 是同步方式，适用于服务器端的 module loading，NodeJS 的 module 使用了它。
+
+**Google**: AMD 使用 `exports` 对象来导出 module 的 API，使用 `require()` 来导入依赖。RequireJS 在载入前使用 `define()` 来声明依赖。
+
+
+* 什么是 HashTable？
+
+
 * 请解释为什么接下来这段代码不是 IIFE (立即调用的函数表达式)：`function foo(){ }();`.
   * 要做哪些改动使它变成 IIFE?
+
+**Try**: 因为 function foo() {} 首先会被解释为函数定义，然后使用执行符号 () 不会引用到这个函数。`(function foo() {})()` 就可以了。
+
+**Google**: function foo() {} 是一条语句，它不会像表达式一样执行。`()` 会被解释为一个分组操作(设置优先级)，但是里面没有表达式，所以会抛出一个 SyntaxError。总之想办法使解释器认为 `function` 不是一个语句而是一个表达式的话就会作为 IIFE 执行了，比如：
+```javascript
+(function foo(){})();
+(function foo(){}());
+var i = function foo(){}();
+!function foo(){}();
+true, function foo(){}();
+new function(){}();
+```
+
+
 * 描述以下变量的区别：`null`，`undefined` 或 `undeclared`？
   * 该如何检测它们？
+
+**Try***: null 表示一个已经定义的变量但是还没有赋值。undefiled 当引用一个不存在的变量时会出现。可以使用 `myVal == null` 来检测 null，可以使用 `typeof myVal == 'undefined'` 来检测 undefined。
+
+**Google**: `null` 是变量可以设置的一个值，它可以赋给变量代表没有值。`undefined` 是一种可以检测变量是否已经赋值的类型。`undeclared` 意味着变量从来就不存在，它会造成一个错误。
+另外: `undefined` 也是一个可以修改的全局变量。很多库会覆盖 `library` 导致它修改。（现在不能修改了）
+
+
 * 什么是闭包 (closure)，如何使用它，为什么要使用它？
+
+**Try**: 闭包是在另一个函数中的函数。内层函数可以访问外层函数的变量，但是反过来不行。如果内层函数使用了外层函数的变量，外层函数的变量会一直存在在内存中即使外层函数已经返回了。而且，外层函数的变量不可以在其他地方访问，只有内层函数中可以。这个特性造成了这个隐藏的属性。
+
+**Google**: 闭包是一个函数上下文中记住了另一个上下文中的变量 - 这个上下文是已经定义的。而且，在一个函数中定义不必要的函数是不明智的，因为这会浪费内存和速度。
+
+https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Closures
+
+
 * 请举出一个匿名函数的典型用例？
+
+**Try**: 解决循环错误：
+
+```javascript
+// problem
+var obj = {};
+for (var i = 0; i < 10; i++ ) {
+	obj[i] = function(){
+		console.log("ret: " + i);
+	};
+}
+obj[0]();
+
+// correction
+var obj = {};
+for (var i = 0; i < 10; i++ ) {
+	obj[i] = (function(index){
+		return function(){
+			console.log("ret: " + index);
+		}
+	})(i);
+}
+obj[0]();
+
+```
+
+
+* 解释以下 "JavaScript 模块化编程" 以及你什么时候会使用它。
+  * 提到清理命名空间会加分。
+  * What if your modules are namespace-less?
+
 * 你是如何组织自己的代码？是使用模块模式，还是使用经典继承的方法？
+
+module pattern
+```javascriptjavascript
+var myModule = (function(){
+
+	var privateVar = "abc";
+	var privateMethod = function() {
+		console.log(privateVar);
+	};
+
+	return {
+		setVar: function(str) {
+			privateVar = str;
+		},
+		getVar: function() {
+			return privateVar;
+		},
+		printVar: privateMethod
+	};
+
+})();
+```
+classical inheritance
+```javascript
+function Person (name) {
+	this.name = name;
+}
+Person.prototype.sayMyName = function() {
+	console.log("My name is " + this.name);
+};
+Person.prototype.walk = function() {
+	console.log("I am walking...");
+};
+
+function Student(name){
+	Person.call( this, name );
+}
+
+Student.prototype = new Person();
+// Student.prototype = Object.create(Person.prototype);
+
+Student.prototype.read = function() {
+	console.log("I am reading...");
+};
+
+
+var neil = new Student("neill");
+neil.sayMyName();
+neil.walk();
+neil.read();
+console.log(neil instanceof Student); // true
+console.log(neil instanceof Person); // true
+```
+
+
 * 请指出 JavaScript 宿主对象 (host objects) 和原生对象 (native objects) 的区别？
+
+原生对象是 ECMAScript 定义的，比如 String，Object，Array 这些。
+宿主对象是 JavaScript 运行环境定义的，在浏览器中，如 windows，document，history 等。
+
+
 * 请指出以下代码的区别：`function Person(){}`、`var person = Person()`、`var person = new Person()`？
+
+function Person(){} is a function statement the declare a function. Or in term of classical inheritance, it is a constructor of a class. 
+var person = Person() is execute the Person function and assign the return value to person. 
+var person  = new Person() will create a new object and make object's prototype to Person's prototype (inheritance), and exec the Person function (constructor) in the scope of the new object. Then assign the return object to person. If not a object return, the new object to will be assigned to person.
+
+
+
 * `.call` 和 `.apply` 的区别是什么？
+
+`.call` 后面是一个参数列表，`.apply` 后面是一个参数数组。
+
+
 * 请解释 `Function.prototype.bind`？
+
+Function.prototype.bind bind the scope (this) of the function to the first arguement.
+
+
 * 在什么时候你会使用 `document.write()`？
+
+#### Most generated ads still utilize document.write() although its use is frowned upon
+dyanmically load some JavsScript files, google analytics tool
+
+
 * 请指出浏览器特性检测，特性推断和浏览器 UA 字符串嗅探的区别？
+
+
+
+
 * 请尽可能详尽的解释 Ajax 的工作原理。
+
+use XMLHttpRequest object in JavaScript to send/receive data ayncly to sever. 
+
+
 * 使用 Ajax 都有哪些优劣？
 * 请解释 JSONP 的工作原理，以及它为什么不是真正的 Ajax。
 * 你使用过 JavaScript 模板系统吗？
